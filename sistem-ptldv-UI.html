@@ -565,13 +565,26 @@ function submitScore(){
   if(!CONFIG.ENDPOINT||!st.sess||!st.sess.token){st.send={state:'off'};renderPanel();return;}
   var body=submitBody();savePending(body);sendBody(body);
 }
-function sendBody(body){
-  st.send={state:'sending'};renderPanel();
+var AUTO_JEDA=[4000,8000];   /* percobaan ulang otomatis: jeda (ms) sebelum percobaan ke-1 dan ke-2 */
+var sendSeq=0;
+function sendBody(body,n){
+  var id=++sendSeq;n=n||0;
+  var stale=function(){return id!==sendSeq;};
+  var show=function(x){st.send=x;if(st.over)renderPanel();};
+  var fail=function(msg,retry){
+    if(stale())return;
+    if(retry&&n<AUTO_JEDA.length){
+      show({state:'sending',n:n+1,wait:true});
+      setTimeout(function(){if(!stale())sendBody(body,n+1);},AUTO_JEDA[n]);
+      return;
+    }
+    show({state:'err',msg:msg,retry:retry});
+  };
+  show({state:'sending',n:n});
   callServer(body).then(function(res){
-    if(res&&res.ok){clearPending();st.send={state:'ok',res:res};}
-    else{var f=fatalCode(res);if(f)clearPending();st.send={state:'err',msg:(res&&res.pesan)||'Server menolak skor.',retry:!f};}
-    renderPanel();
-  }).catch(function(err){st.send={state:'err',msg:netMsg(err),retry:true};renderPanel();});
+    if(res&&res.ok){clearPending();if(!stale())show({state:'ok',res:res});}
+    else{var f=fatalCode(res);if(f)clearPending();fail((res&&res.pesan)||'Server menolak skor.',!f);}
+  }).catch(function(err){fail(netMsg(err),true);});
 }
 function resendPending(){
   var p=loadPending();if(!p)return;
@@ -580,6 +593,34 @@ function resendPending(){
     if(res&&res.ok){clearPending();lgMsg('ok','✔ Skor tertunda terkirim: '+res.skor+' / '+res.maks+'.');var b=$('#bPending');if(b)b.disabled=true;}
     else{if(fatalCode(res))clearPending();lgMsg('bad',esc((res&&res.pesan)||'Gagal mengirim.'));}
   }).catch(function(err){lgMsg('bad',netMsg(err));});
+}
+/* skor sudah selesai dikerjakan tetapi belum tercatat di server (sedang dikirim, atau gagal dan masih bisa dicoba lagi) */
+function unsentScore(){
+  var x=st.send;
+  return st.mode==='practice'&&st.over&&!!x&&(x.state==='sending'||(x.state==='err'&&x.retry));
+}
+function konfirmPindah(){
+  if(!unsentScore())return true;
+  return confirm(loadPending()
+    ?'Skormu belum tercatat di server. Kamu masih bisa mengirimnya nanti lewat Latihan Mandiri di peramban dan perangkat ini, selama waktu latihan belum habis. Tetap pindah?'
+    :'Skormu belum tercatat di server dan tidak dapat disimpan di peramban ini. Jika pindah, skor bisa hilang. Tetap pindah?');
+}
+/* pemberitahuan skor tertunda di luar panel masuk (mis. mode Belajar) */
+function pendNotice(el){
+  if(!CONFIG.ENDPOINT||st.gate||st.over||practiceActive()||!loadPending())return;
+  var d=document.createElement('div');d.id='pendBar';d.className='rule';
+  d.innerHTML='<span id="pendMsg">⚠ Ada skor latihan yang <b>belum terkirim</b> ke gurumu.</span> <button class="btn" id="bPendBar">Kirim sekarang</button>';
+  el.insertBefore(d,el.firstChild);on('bPendBar',resendBar);
+}
+function resendBar(){
+  var p=loadPending(),box=$('#pendBar'),msg=$('#pendMsg'),b=$('#bPendBar');
+  if(!p||!box)return;
+  b.disabled=true;msg.innerHTML='⏳ Mengirim skor tertunda…';
+  callServer(p).then(function(res){
+    if(res&&res.ok){clearPending();box.className='fb ok';box.innerHTML='✔ Skor tertunda terkirim: '+res.skor+' / '+res.maks+'.'+(res.ulang?' (Skor ini sudah pernah dikirim sebelumnya.)':'');}
+    else if(fatalCode(res)){clearPending();box.className='fb bad';box.innerHTML=esc((res&&res.pesan)||'Server menolak skor.');}
+    else{msg.innerHTML='⚠ '+esc((res&&res.pesan)||'Gagal mengirim.');b.disabled=false;}
+  }).catch(function(err){msg.innerHTML='⚠ '+esc(netMsg(err));b.disabled=false;});
 }
 function nextLearn(){
   if(st.pick==='r2')setSystem(genSystem(2),'r2');
@@ -703,10 +744,11 @@ function renderPanel(){
   var el=$('#panel');
   if(st.gate)return loginPanel(el);
   if(st.over)return overPanel(el);
-  if(st.stage==='intro')return introPanel(el);
-  if(st.stage==='ineq')return ineqPanel(el);
-  if(st.stage==='inter')return interPanel(el);
-  summaryPanel(el);
+  if(st.stage==='intro')introPanel(el);
+  else if(st.stage==='ineq')ineqPanel(el);
+  else if(st.stage==='inter')interPanel(el);
+  else summaryPanel(el);
+  pendNotice(el);
 }
 function mini(ph){
   var k=PH.indexOf(ph);
@@ -1065,7 +1107,7 @@ function overPanel(el){
   var pct=m?Math.round(100*s/m):0;
   var msg=pct>=90?'Luar biasa! Kamu sudah menguasai cara menentukan daerah penyelesaian sistem.':pct>=70?'Bagus! Sedikit lagi kamu akan mahir.':'Ayo belajar lagi pelan-pelan di mode Belajar, lalu coba latihan lagi.';
   var h='<h2>Latihan selesai</h2><div class="score">'+s+'<small> / '+m+'</small></div>';
-  if(snd.state==='sending')h+='<div class="fb info">⏳ Mengirim skor ke server…</div>';
+  if(snd.state==='sending')h+='<div class="fb info">⏳ '+(snd.wait?'Pengiriman gagal. Mencoba lagi otomatis ('+snd.n+' dari '+AUTO_JEDA.length+')…':'Mengirim skor ke server…'+(snd.n?' (percobaan ulang '+snd.n+' dari '+AUTO_JEDA.length+')':''))+'</div>';
   else if(server)h+='<div class="fb ok">✔ Skor dihitung ulang oleh server dari jawabanmu dan sudah tercatat untuk gurumu.'+(snd.res.ulang?' (Skor ini sudah pernah dikirim sebelumnya.)':'')+'</div>';
   else if(snd.state==='err')h+='<div class="fb bad">'+esc(snd.msg||'Gagal mengirim skor.')+(snd.retry?' Skormu <b>belum tercatat</b>. Pastikan internet menyala, lalu tekan “Kirim ulang”.':'')+'</div>';
   else h+='<div class="fb info">Mode uji: skor tidak disetor ke server.</div>';
@@ -1078,7 +1120,7 @@ function overPanel(el){
     b+='<button class="btn" id="bLearn">Kembali belajar</button>';
   }
   el.innerHTML=h+'<div class="row">'+b+'</div>';
-  on('bResend',function(){sendBody(submitBody());});on('bAgain',startPractice);on('bLearn',function(){setTab('learn');startLearn();});
+  on('bResend',function(){sendBody(submitBody());});on('bAgain',startPractice);on('bLearn',function(){if(!konfirmPindah())return;setTab('learn');startLearn();});
 }
 
 /* ---------- Bidang koordinat ---------- */
@@ -1196,10 +1238,11 @@ $('#plane').addEventListener('click',function(e){
 function setTab(m){$('#tabLearn').classList.toggle('on',m==='learn');$('#tabPractice').classList.toggle('on',m==='practice');}
 $('#tabLearn').onclick=function(){
   if(practiceActive()&&!confirm('Latihan sedang berjalan. Jika pindah ke mode Belajar, latihan harus diulang dari awal dan tercatat sebagai "dilanjutkan". Tetap pindah?'))return;
+  if(!konfirmPindah())return;
   setTab('learn');startLearn();
 };
-$('#tabPractice').onclick=function(){if(practiceActive())return;setTab('practice');startPractice();};
-window.addEventListener('beforeunload',function(e){if(practiceActive()){e.preventDefault();e.returnValue='';}});
+$('#tabPractice').onclick=function(){if(practiceActive()||!konfirmPindah())return;setTab('practice');startPractice();};
+window.addEventListener('beforeunload',function(e){if(practiceActive()||unsentScore()){e.preventDefault();e.returnValue='';}});
 $('#bRepeat').onclick=function(){setSystem(st.raw);};
 $('#bNextQ').onclick=nextLearn;
 window.__api={validSys:validSys,genSystem:genSystem,FIXED:FIXED,buildPack:CORE.buildPack,gradeTrace:CORE.gradeTrace,cek:CORE.cek,CORE:CORE};
