@@ -158,6 +158,96 @@ body.plus-off #plusToggle{bottom:8px;width:auto;height:44px;border-radius:999px;
   #plusWrap[data-act=point] #armL{transform:rotate(75deg)}
 }
 
+
+/* ===== Tampilan ringkas PC/laptop: satu layar, tanpa scroll halaman ===== */
+@media (min-width:860px) and (min-height:500px){
+  body{--res:calc(var(--plus-w)*.93 + 50px);--ps:clamp(300px,min(calc(100vh - 88px - var(--res)),calc(100vw - 480px)),640px)}
+  body.plus-off{--res:0px}
+  html,body{height:100%}
+  body{overflow:hidden;font-size:15px;line-height:1.45}
+  body .wrap,body:not(.plus-off) .wrap{height:100vh;max-width:1320px;padding:8px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto minmax(0,1fr);column-gap:12px}
+  header{grid-column:1/3;margin:0 0 6px;gap:6px}
+  header>div{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  header h1{font-size:1.15rem}
+  header p{font-size:.82rem}
+  .tabs{padding:3px}
+  .tab{min-height:34px;padding:4px 12px}
+  .card{padding:10px 14px;margin-bottom:8px;border-radius:12px}
+  #problemCard{grid-column:1;grid-row:2}
+  #progressBox{grid-column:1;grid-row:3}
+  .layout{display:contents}
+  #panel{grid-column:1;grid-row:4;overflow:auto;min-height:0;margin-bottom:0}
+  .plane{grid-column:2;grid-row:2/5;align-self:start;position:static;padding:8px;margin:0}
+  .plane svg{width:var(--ps);height:var(--ps)}
+  .plane p{display:none}
+  /* kartu soal */
+  .prob{flex-wrap:nowrap;gap:12px;align-items:center}
+  .prob>div:first-child{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 16px;align-items:center}
+  #probMeta{grid-column:1;grid-row:1}
+  #probAsk{grid-column:1;grid-row:2;margin:0;font-size:.9rem}
+  #probText{grid-column:2;grid-row:1/3}
+  .prob-actions{flex-direction:column;gap:4px}
+  .prob-actions .btn{min-height:32px;padding:3px 10px;font-size:.82rem;border-radius:9px}
+  .srow{font-size:1.2rem;padding:0 8px}
+  .brace{font-size:2.6rem}
+  /* progres */
+  #progressBox{padding:6px 10px}
+  ol.prog{margin:0}
+  ol.prog li{font-size:.72rem}
+  ol.prog li span{width:24px;height:24px;font-size:.78rem}
+  #stepText{display:none}
+  /* isi panel */
+  #panel h2{font-size:1.05rem;margin:0 0 4px}
+  #panel p{margin:.35em 0}
+  .btn{min-height:38px;padding:5px 14px;border-radius:10px}
+  .chip{min-height:34px;padding:3px 12px}
+  .segb{min-height:38px;padding:4px 12px}
+  .relb{min-width:48px;padding:4px 10px;font-size:1.1rem}
+  input.num{min-height:38px;padding:4px;font-size:1.05rem}
+  input.num.vin{width:84px}
+  .eqin .num{width:72px}
+  .xy input{width:64px}
+  .row{margin-top:8px}
+  .note{margin:6px 0;padding:4px 10px}
+  .rule{margin:6px 0;padding:5px 10px;font-size:.9rem}
+  .chips{margin:4px 0;gap:6px}
+  .lvl{margin:4px 0;display:flex;align-items:center;gap:10px}
+  .lvl>b{flex:0 0 150px}
+  .lvl .chips{margin:0}
+  .mini{margin:0 0 6px}
+  .hints{margin:6px 0 0;padding:5px 10px 5px 26px;font-size:.9rem}
+  .fb{margin-top:6px;padding:7px 10px}
+  .trow{padding:6px 10px;margin:6px 0}
+  .eqin,.xy{margin:6px 0;font-size:1.1rem}
+  .seg{margin:6px 0}
+  .calc{font-size:1rem}
+  .score{font-size:2.4rem}
+  ol.sum li{margin:.3em 0}
+  /* langkah 3: baris substitusi dibuat 2 kolom agar lebih pendek */
+  #substRows .trow{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:center;padding:4px 10px;margin:4px 0}
+  #substRows .trow p{margin:0}
+  #substRows .trow p:nth-child(1){grid-column:1;grid-row:1/3}
+  #substRows .trow p:nth-child(2){grid-column:2;grid-row:1;font-size:.9rem}
+  #substRows .trow p:nth-child(3){grid-column:2;grid-row:2}
+  .relb{min-height:34px;padding:2px 10px}
+  .segb{min-height:36px;padding:2px 12px}
+  .hints{font-size:.85rem;margin:4px 0 0}
+  .srow{font-size:1.1rem}
+  .brace{font-size:2.3rem}
+  .card{margin-bottom:6px}
+  #progressBox{padding:4px 10px}
+  /* langkah 2 dan 4: label dan pilihan dalam satu baris */
+  .trow:has(.seg),.trow:has(.opb){display:flex;align-items:center;justify-content:space-between;gap:6px 14px;flex-wrap:wrap}
+  .trow:has(.seg)>.seg{margin:0}
+  .trow:has(.opb)>p{margin:0;font-size:.85rem}
+  .chip{min-height:32px}
+  .fb{padding:5px 10px;line-height:1.35}
+  #panel p{margin:.25em 0}
+  #panel h2{margin:0 0 2px}
+  #substRows .trow{margin:3px 0}
+  .trow{margin:4px 0}
+}
+@media (min-width:860px) and (max-height:720px){:root{--plus-w:100px}}
 </style>
 </head>
 <body>
@@ -436,7 +526,7 @@ function hintList(){
     if(!Lk.valOK)return ['Hitung tiap suku pada ruas kiri: '+(E.a!==0?par(E.a)+' × ('+n(T.x)+') ':'')+(E.a!==0&&E.b!==0?'dan ':'')+(E.b!==0?par(E.b)+' × ('+n(T.y)+')':'')+'.',
       'Suku-suku itu bernilai '+[E.a!==0?n(E.a*T.x):null,E.b!==0?n(E.b*T.y):null].filter(function(z){return z!==null;}).join(' dan ')+'. Jumlahkan.',
       'Hasilnya <b>'+n(v)+'</b>.'];
-    return ['Bandingkan '+n(v)+' dengan '+n(E.c)+': mana yang lebih besar?',
+    return ['Bandingkan '+n(v)+' dengan '+n(E.c)+'. Mana yang lebih besar?',
       'Bayangkan garis bilangan: bilangan di sebelah kiri lebih kecil.',
       n(v)+(v<E.c?' lebih kecil dari ':' lebih besar dari ')+n(E.c)+', jadi tandanya <b>'+(v<E.c?'&lt;':'&gt;')+'</b>.'];
   }
@@ -666,7 +756,7 @@ function renderSubst(){
     var L=st.L[k],E=L.E,v=E.a*T.x+E.b*T.y,both=L.valOK&&L.relOK,markBad=L.checked&&(!L.valOK||!L.relOK);
     return '<div class="trow'+(both?' ok':markBad?' bad':'')+'" data-k="'+k+'">'
       +'<p class="calc"><b style="color:'+COL[k]+'">'+ordinal(k)+'</b> <span class="eq">'+esc(lhs(E))+'</span> → '+esc(lhsSub(E,T.x,T.y))+' = <input class="num vin'+(L.valOK?' ok':'')+'" data-k="'+k+'" type="number" step="any" inputmode="decimal" value="'+(L.valOK?String(v):L.valIn)+'"'+(L.valOK?' disabled':'')+' aria-label="hasil substitusi persamaan '+(k+1)+'"></p>'
-      +'<p class="calc">Bandingkan dengan '+n(E.c)+': '+(L.valOK?n(v):'hasil')+' '
+      +'<p class="calc">Bandingkan dengan '+n(E.c)+'</p><p class="calc">'+(L.valOK?n(v):'hasil')+' '
       +['<','=','>'].map(function(r){return '<button class="btn relb'+(L.rel===r?' sel':'')+'" data-k="'+k+'" data-r="'+r+'"'+(L.relOK?' disabled':'')+' aria-label="tanda '+esc(r)+'">'+esc(r)+'</button>';}).join(' ')
       +' '+n(E.c)+'</p></div>';
   }).join('');
@@ -698,7 +788,7 @@ function checkSubst(){
   if(firstBad<0){
     award();
     var hh=$('#hints');if(hh)hh.hidden=true;
-    fb('ok','Tepat! Karena T berada di dalam DP, tanda hasil perbandingan ini adalah arah tanda pertidaksamaan: '+st.sys.map(function(p,k){var E=st.L[k].E;return '<b style="color:'+COL[k]+'">'+ordinal(k)+'</b> '+n(E.a*T.x+E.b*T.y)+' '+(E.a*T.x+E.b*T.y<E.c?'&lt;':'&gt;')+' '+n(E.c);}).join(' ; ')+'.');
+    fb('ok','Tepat! Karena T berada di dalam DP, tanda hasil perbandingan ini adalah arah tanda pertidaksamaan.<br>'+st.sys.map(function(p,k){var E=st.L[k].E;return '<b style="color:'+COL[k]+'">'+ordinal(k)+'</b> '+n(E.a*T.x+E.b*T.y)+' '+(E.a*T.x+E.b*T.y<E.c?'&lt;':'&gt;')+' '+n(E.c);}).join('<br>'));
     nextBtn('Langkah 4 ➜',function(){setStep(4);});
   }else{
     st.badIdx=firstBad;
